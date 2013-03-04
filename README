@@ -1,0 +1,98 @@
+synexec
+-------
+ Synchronised Executioner
+
+ Copyright 2013 (c) Felipe Franciosi <felipe@paradoxo.org>
+
+ Disclaimer:
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, version only.
+
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+  GNU General Public License for more details.
+
+  You should have received a copy of the GNU General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+
+ Description:
+  Synchronised Executioner is a VERY INSECURE, UNAUTHENTICATED network-based
+  cooperative protocol developed to coordinate the execution of tasks, possibly
+  in a virtualised environment. A master process (ideally running on a control
+  domain) and one or more slave processes (ideally running within virtual
+  machines) will cooperate to:
+
+  - Establish a session amongst the master and the slaves;
+  - Negotiate what tasks are to be executed and transfer the necessary data;
+  - Execute the tasks, keeping track of progress and reporting periodically.
+
+  See NOTES for further information on the protocol.
+
+
+ WARNING:
+  Remember that this software will allow ANY MASTER (including any other
+  software, malicious or not, that understands the protocol) to run ANY CODE
+  on a reachable host running a synexec_slave. 
+
+
+ Compiling:
+  Run "make" from the project root directory.
+
+
+ Usage:
+  To run a master process:
+  ./synexec_master [ -hvd ] [ -i <if_name> ]
+                   [ -p <port> ] [-s <session> ] <slaves> <conf>
+
+  -h             Print a help message and quit.
+  -v             Increase verbosity (may be used multiple times).
+  -d             Run as daemon. stdout/stderr will be redirect to a log file.
+  -i <if_name>   Use interface <if_name> instead of default.
+  -p <port>      Override default network port (5165) with <port>.
+  -s <session>   Define session ID to <session> (uint32_t, default 0).
+  <slaves>       Wait for this many slaves before starting.
+  <conf>         Configuration file for this session.
+
+  A configuration file is organised as follows:
+
+  First line:
+   * The command line to be executed by the slaves.
+   * The first parameter of this command line must be an executable file.
+   * First line example: /bin/sleep 5s
+
+  Remainder of the file:
+   * The remainder of the file will be copied to the slave.
+   * By default, a slave will store the file in /tmp/synexec_slave_conf.<pid>
+   * The configuration file can be passed in the command line by using the
+     special tag ":CONF:" (without quotes).
+
+  Full example:
+   /bin/bash :CONF:
+   #!/bin/bash
+   mkdir /src || exit
+   /bin/dd if=/dev/urandom of=/src/file.dat bs=1024 count=1048576
+   cp -a /src /dst
+
+  Explanation:
+   The above configuration file will result into a file being created into
+   each slave's /tmp/ and named synexec_slave_conf.1234 (where 1234 is the
+   corresponding PID for the synexec_slave process. The file contents will
+   be:
+ 
+   #!/bin/bash
+   mkdir /src || exit
+   /bin/dd if=/dev/urandom of=/src/file.dat bs=1024 count=1048576
+
+   The slave will then execute the following command:
+   /bin/bash /tmp/synexec_slave_conf.1234
+
+   All the output from the slave will be placed into the file synexec.out,
+   also in the /tmp/ directory.
+
+ 
+ Changelog:
+  2013.03.04 - Felipe Franciosi
+   - Committing to github. yay!

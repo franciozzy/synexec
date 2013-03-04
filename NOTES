@@ -1,0 +1,52 @@
+--------------------------------------------------------------------------------
+ Synchronised Executioner - Design Notes
+--------------------------------------------------------------------------------
+ OVERVIEW
+----------
+ Synchronised Executioner is a VERY INSECURE, UNAUTHENTICATED network-based
+ cooperative protocol developed to coordinate the execution of tasks, possibly
+ in a virtualised environment. A master process (ideally running on a control
+ domain) and one or more slave processes (ideally running within virtual
+ machines) will cooperate to:
+
+ - Establish a session amongst the master and the slaves;
+ - Negotiate what tasks are to be executed and transfer the necessary data;
+ - Execute the tasks, keeping track of progress and reporting periodically.
+
+ A session is identified by a 32-bit unsigned integer and should be unique in
+ the network (otherwise slaves may fail with regards to which master they should
+ be reporting to). It is organised in three phases, described as follows:
+
+ PHASE 1: DISCOVERY
+--------------------
+ When ran, a master process will periodically issue UDP broadcast packets (with
+ one second intervals) requesting for slaves to manifest themselves. Upon
+ receiving such packets, slaves should verify their session ID and, in case of a
+ match, connect back to the master using TCP.
+
+ During the broadcast intervals, the master awaits slave connections. At the end
+ of every interval, the master will probe the connections that were successfully
+ established. If not enough slaves are present, the phase loops. Otherwise, this
+ phase ends and the next phase begins.
+
+ Whilst connected, slaves will listen for commands over the TCP connection,
+ but will discard any UDP packets, even if they match their session ID.
+
+ PHASE 2: CONFIGURATION
+------------------------
+ Once the master detects that the required number of slaves is present in the
+ session, it will send a configuration object that contains the specification of
+ the task to be executed. The slaves should then acknowledge that they are able
+ to execute the task (i.e. they validate the configuration object and accept or
+ decline it). If any slave declines the object, the session is deemed failed and
+ the master terminates, causing the slaves to terminate or loop back to phase 1.
+
+ PHASE 3: EXECUTION
+--------------------
+ Once the slaves are configured, they should wait for the master to send a start
+ message. When this happens, they immediately dispatch the task at hand.
+
+ At any time, a slave can report its progress to the master. They should do so
+ at least once during the session, which is when the task terminates. Also at
+ any time, the master process can probe the slaves for the current situation.
+ They should be capable of responding promptly reporting their progress. 
