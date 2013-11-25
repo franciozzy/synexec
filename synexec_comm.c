@@ -380,7 +380,7 @@ comm_recv(int sock, synexec_msg_t *net_msg, struct timeval *timeout, void **data
 	// Receive header
 	err = _comm_recv(sock, timeout, (void *)net_msg, sizeof(*net_msg));
 	if (verbose > 2){
-		fprintf(stderr, "%s: _comm_recv(%d, %p, %p, %d) = %d\n", __FUNCTION__, sock, timeout, net_msg, sizeof(*net_msg), err);
+		fprintf(stderr, "%s: _comm_recv(%d, %p, %p, %lu) = %d\n", __FUNCTION__, sock, timeout, net_msg, (unsigned long)sizeof(*net_msg), err);
 		fflush(stderr);
 	}
 	if (err < 0){

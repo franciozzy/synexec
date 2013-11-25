@@ -125,7 +125,7 @@ beacon(){
 		net_len = recvfrom(beacon_fd, &net_msg, sizeof(net_msg), 0, (struct sockaddr *)&sender_addr, &beacon_slen);
 		net_msg_ntoh(&net_msg);
 		if (verbose > 0){
-			printf("%s: UDP Received %d bytes.\n", __FUNCTION__, net_len);
+			printf("%s: UDP Received %ld bytes.\n", __FUNCTION__, (long)net_len);
 			fflush(stdout);
 		}
 		if (net_len < 0){
@@ -151,7 +151,7 @@ beacon(){
 			printf("%s:  net_msg.command = %hhu\n", __FUNCTION__, net_msg.command);
 			printf("%s:  net_msg.datalen = %hu\n", __FUNCTION__, net_msg.datalen);
 			if (verbose > 3){
-				printf("%s: Packet had %d bytes: ", __FUNCTION__, net_len);
+				printf("%s: Packet had %ld bytes: ", __FUNCTION__, (long)net_len);
 				for (i=0; i<net_len; i++){
 					printf("%02hhX ", *(((char *)&net_msg)+i));
 				}

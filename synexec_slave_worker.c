@@ -169,7 +169,7 @@ make_argv(char *data, char *conf_fn, char **argp, char ***argv){
 	// Allocate argv array
 	if ((*argv = (char **)calloc(1, argc*sizeof(char *))) == NULL){
 		perror("calloc");
-		fprintf(stderr, "%s: Error alloc'ing %d bytes for worker argv.\n", __FUNCTION__, argc*sizeof(char *));
+		fprintf(stderr, "%s: Error alloc'ing %lu bytes for worker argv.\n", __FUNCTION__, argc*(long unsigned)sizeof(char *));
 		goto err;
 	}
 
@@ -324,7 +324,7 @@ handle_conn(int worker_fd, char *conf_fn){
 			// Write the configuration file to disk
 			if (fwrite(ptr, 1, net_msg.datalen-(ptr-data), conf_fp) < 0){
 				perror("fwrite");
-				fprintf(stderr, "%s: Error writing %hu bytes to configuration file '%s'.\n", __FUNCTION__, net_msg.datalen-(ptr-data), conf_fn);
+				fprintf(stderr, "%s: Error writing %hu bytes to configuration file '%s'.\n", __FUNCTION__, net_msg.datalen-(uint16_t)(ptr-data), conf_fn);
 				goto err;
 			}
 
