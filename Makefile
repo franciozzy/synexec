@@ -20,7 +20,7 @@
 # Read the README file for the changelog and information on how to
 # compile and use this program.
 
-all:	tags
+all:
 	make -f Makefile.slave
 	make -f Makefile.master
 
