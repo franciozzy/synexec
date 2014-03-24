@@ -314,8 +314,11 @@ retry:
 			fprintf(stdout, "%s: read(%d, %p, %hu) = %d\n", __FUNCTION__, sock, data, datalen, i);
 			fflush(stdout);
 		}
-		if (i <= 0){
-			// zero is not necessarily a read() error, but we were expecting data at this point
+		if (i == 0){
+			fprintf(stderr, "%s: Expected to read data but got none\n", __FUNCTION__);
+			fflush(stderr);
+			goto err;
+		} else if (i < 0){
 			perror("read");
 			fprintf(stderr, "%s: Read error while reading from socket.\n", __FUNCTION__);
 			fflush(stderr);
