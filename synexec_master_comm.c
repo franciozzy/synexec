@@ -542,6 +542,7 @@ join_slaves(slaveset_t *slaveset){
 		while(slave){
 			if (FD_ISSET(slave->slave_fd, &fds)){
 				// Read from this slave
+				data = NULL;
 				i = comm_recv(slave->slave_fd, &net_msg, NULL, (void**)&data, NULL);
 				if (i < 0)
 					goto err;
