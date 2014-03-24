@@ -28,6 +28,7 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <unistd.h>
+#include <fcntl.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <sys/select.h>
@@ -93,6 +94,10 @@ beacon(){
 		perror("socket");
 		fprintf(stderr, "%s: Error creating beacon UDP socket.\n", __FUNCTION__);
 		goto err;
+	}
+	if ((i = fcntl(beacon_fd, F_GETFD)) < 0 ||
+	    fcntl(beacon_fd, F_SETFD, i | FD_CLOEXEC)) {
+		fprintf(stderr, "%s: Could not set socket to be closed on exec\n", __FUNCTION__);
 	}
 
 	// Bind beacon UDP socket to net_ifbc

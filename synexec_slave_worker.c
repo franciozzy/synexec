@@ -379,6 +379,7 @@ conf_close:
 				}else
 				if (worker_pid == 0){
 					// Child
+					close(worker_fd);
 					if ((exec_fd = creat(MT_SYNEXEC_SLAVE_OUTPUT, S_IRUSR|S_IWUSR)) < 0){
 						perror("creat");
 						goto err;
