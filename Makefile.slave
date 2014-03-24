@@ -21,8 +21,8 @@
 # compile and use this program.
 
 CC=gcc
-CFLAGS_OBJS=-Wall -O3 -c
-CFLAGS_TARGET=-Wall -O3 -lpthread -s
+CFLAGS_OBJS=-Wall -O3 -pthread -c
+CFLAGS_TARGET=-Wall -O3 -pthread -s
 
 TARGET=synexec_slave
 OBJS=synexec_comm.o synexec_netops.o synexec_common.o synexec_slave.o synexec_slave_beacon.o synexec_slave_worker.o
