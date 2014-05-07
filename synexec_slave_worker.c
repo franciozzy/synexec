@@ -260,9 +260,19 @@ handle_conn(int worker_fd, char *conf_fn){
 		if (i == 0){
 			// If finished working, report back
 			if (memcmp(&worker_time[1], &worker_time[2], sizeof(worker_time[1]))){
+				struct {
+					int64_t tv_sec;
+					int64_t tv_usec;
+				} net_time[3];
+
+				// Marshal data
+				net_time[0].tv_sec = worker_time[0].tv_sec; net_time[0].tv_usec = worker_time[0].tv_usec;
+				net_time[1].tv_sec = worker_time[1].tv_sec; net_time[1].tv_usec = worker_time[1].tv_usec;
+				net_time[2].tv_sec = worker_time[2].tv_sec; net_time[2].tv_usec = worker_time[2].tv_usec;
+
 				printf("%s: Work finished. Notifying master...\n", __FUNCTION__);
 				fflush(stdout);
-				i = comm_send(worker_fd, MT_SYNEXEC_MSG_FINISHD, NULL, &worker_time, sizeof(worker_time));
+				i = comm_send(worker_fd, MT_SYNEXEC_MSG_FINISHD, NULL, &net_time, sizeof(net_time));
 				memset(&worker_time, 0, sizeof(worker_time));
 			}
 			continue;
