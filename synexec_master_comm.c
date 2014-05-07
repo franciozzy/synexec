@@ -33,6 +33,7 @@
 #include <arpa/inet.h>
 #include <sys/select.h>
 #include <unistd.h>
+#include <fcntl.h>
 #include "synexec_netops.h"
 #include "synexec_comm.h"
 #include "synexec_common.h"
@@ -91,6 +92,7 @@ comm_tcp_accept(int sock, struct timeval *timeout, slaveset_t *slaveset){
 
 	// There is a connection on the pipe
 	slave_len = sizeof(slave_addr);
+#ifdef SOCK_NONBLOCK
 	if ((slave_sock = accept4(sock, (struct sockaddr *)&slave_addr, &slave_len, SOCK_NONBLOCK)) < 0){
 		// NOTE: This is not necessarily an error. If it happens often, it is probably worth
 		//       to silently handle it (or test for EAGAIN/EWOULDBLOCK, maybe trying to read
@@ -99,6 +101,26 @@ comm_tcp_accept(int sock, struct timeval *timeout, slaveset_t *slaveset){
 		fprintf(stderr, "%s: Error accepting new connection.\n", __FUNCTION__);
 		goto err;
 	}
+#else
+	if ((slave_sock = accept(sock, (struct sockaddr *)&slave_addr, &slave_len)) < 0){
+		// NOTE: This is not necessarily an error. If it happens often, it is probably worth
+		//       to silently handle it (or test for EAGAIN/EWOULDBLOCK, maybe trying to read
+		//       from it for clearing up the select read state).
+		perror("accept");
+		fprintf(stderr, "%s: Error accepting new connection.\n", __FUNCTION__);
+		goto err;
+	}
+	if ((i = fcntl(sock, F_GETFL)) < 0){
+		perror("fcntl");
+		fprintf(stderr, "%s: Error getting socket flags.\n", __FUNCTION__);
+		goto err;
+	}
+	if (fcntl(sock, F_SETFL, i | O_NONBLOCK) < 0){
+		perror("fcntl");
+		fprintf(stderr, "%s: Error setting socket flags.\n", __FUNCTION__);
+		goto err;
+	}
+#endif
 	if (verbose > 0){
 		printf("%s: Accepted connection from '%s:%hu'.\n", __FUNCTION__, inet_ntoa(slave_addr.sin_addr), ntohs(slave_addr.sin_port));
 	}
