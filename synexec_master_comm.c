@@ -33,6 +33,7 @@
 #include <arpa/inet.h>
 #include <sys/select.h>
 #include <unistd.h>
+#include <fcntl.h>
 #include "synexec_netops.h"
 #include "synexec_comm.h"
 #include "synexec_common.h"
@@ -91,6 +92,7 @@ comm_tcp_accept(int sock, struct timeval *timeout, slaveset_t *slaveset){
 
 	// There is a connection on the pipe
 	slave_len = sizeof(slave_addr);
+#ifdef SOCK_NONBLOCK
 	if ((slave_sock = accept4(sock, (struct sockaddr *)&slave_addr, &slave_len, SOCK_NONBLOCK)) < 0){
 		// NOTE: This is not necessarily an error. If it happens often, it is probably worth
 		//       to silently handle it (or test for EAGAIN/EWOULDBLOCK, maybe trying to read
@@ -99,6 +101,26 @@ comm_tcp_accept(int sock, struct timeval *timeout, slaveset_t *slaveset){
 		fprintf(stderr, "%s: Error accepting new connection.\n", __FUNCTION__);
 		goto err;
 	}
+#else
+	if ((slave_sock = accept(sock, (struct sockaddr *)&slave_addr, &slave_len)) < 0){
+		// NOTE: This is not necessarily an error. If it happens often, it is probably worth
+		//       to silently handle it (or test for EAGAIN/EWOULDBLOCK, maybe trying to read
+		//       from it for clearing up the select read state).
+		perror("accept");
+		fprintf(stderr, "%s: Error accepting new connection.\n", __FUNCTION__);
+		goto err;
+	}
+	if ((i = fcntl(sock, F_GETFL)) < 0){
+		perror("fcntl");
+		fprintf(stderr, "%s: Error getting socket flags.\n", __FUNCTION__);
+		goto err;
+	}
+	if (fcntl(sock, F_SETFL, i | O_NONBLOCK) < 0){
+		perror("fcntl");
+		fprintf(stderr, "%s: Error setting socket flags.\n", __FUNCTION__);
+		goto err;
+	}
+#endif
 	if (verbose > 0){
 		printf("%s: Accepted connection from '%s:%hu'.\n", __FUNCTION__, inet_ntoa(slave_addr.sin_addr), ntohs(slave_addr.sin_port));
 	}
@@ -547,13 +569,24 @@ join_slaves(slaveset_t *slaveset){
 				if (i < 0)
 					goto err;
 				if ((i > 0) && (net_msg.command == MT_SYNEXEC_MSG_FINISHD)){
-					if (net_msg.datalen != sizeof(slave->slave_time)){
+					struct {
+						int64_t tv_sec;
+						int64_t tv_usec;
+					} net_time[3];
+
+					if (net_msg.datalen != sizeof(net_time)){
 						fprintf(stderr, "%s: Wrong datalen for FINISHD (slave %s:%hu).\n", __FUNCTION__,
 						        inet_ntoa(slave->slave_addr.sin_addr), ntohs(slave->slave_addr.sin_port));
 						fflush(stderr);
 						continue;
 					}
-					memcpy(slave->slave_time, data, sizeof(slave->slave_time));
+
+					// Unmarshall data (TODO, handle overflow)
+					memcpy(net_time, data, sizeof(net_time));
+					slave->slave_time[0].tv_sec = net_time[0].tv_sec; slave->slave_time[0].tv_usec = net_time[0].tv_usec;
+					slave->slave_time[1].tv_sec = net_time[1].tv_sec; slave->slave_time[1].tv_usec = net_time[1].tv_usec;
+					slave->slave_time[2].tv_sec = net_time[2].tv_sec; slave->slave_time[2].tv_usec = net_time[2].tv_usec;
+
 					printf("%s: Slave (%s:%hu) completed\n", __FUNCTION__,
 					        inet_ntoa(slave->slave_addr.sin_addr), ntohs(slave->slave_addr.sin_port));
 					fflush(stdout);
