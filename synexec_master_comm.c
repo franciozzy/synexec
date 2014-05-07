@@ -569,13 +569,24 @@ join_slaves(slaveset_t *slaveset){
 				if (i < 0)
 					goto err;
 				if ((i > 0) && (net_msg.command == MT_SYNEXEC_MSG_FINISHD)){
-					if (net_msg.datalen != sizeof(slave->slave_time)){
+					struct {
+						int64_t tv_sec;
+						int64_t tv_usec;
+					} net_time[3];
+
+					if (net_msg.datalen != sizeof(net_time)){
 						fprintf(stderr, "%s: Wrong datalen for FINISHD (slave %s:%hu).\n", __FUNCTION__,
 						        inet_ntoa(slave->slave_addr.sin_addr), ntohs(slave->slave_addr.sin_port));
 						fflush(stderr);
 						continue;
 					}
-					memcpy(slave->slave_time, data, sizeof(slave->slave_time));
+
+					// Unmarshall data (TODO, handle overflow)
+					memcpy(net_time, data, sizeof(net_time));
+					slave->slave_time[0].tv_sec = net_time[0].tv_sec; slave->slave_time[0].tv_usec = net_time[0].tv_usec;
+					slave->slave_time[1].tv_sec = net_time[1].tv_sec; slave->slave_time[1].tv_usec = net_time[1].tv_usec;
+					slave->slave_time[2].tv_sec = net_time[2].tv_sec; slave->slave_time[2].tv_usec = net_time[2].tv_usec;
+
 					printf("%s: Slave (%s:%hu) completed\n", __FUNCTION__,
 					        inet_ntoa(slave->slave_addr.sin_addr), ntohs(slave->slave_addr.sin_port));
 					fflush(stdout);
