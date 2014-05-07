@@ -91,11 +91,8 @@ comm_tcp_accept(int sock, struct timeval *timeout, slaveset_t *slaveset){
 
 	// There is a connection on the pipe
 	slave_len = sizeof(slave_addr);
-	if ((slave_sock = accept4(sock, (struct sockaddr *)&slave_addr, &slave_len, SOCK_NONBLOCK)) < 0){
-		// NOTE: This is not necessarily an error. If it happens often, it is probably worth
-		//       to silently handle it (or test for EAGAIN/EWOULDBLOCK, maybe trying to read
-		//       from it for clearing up the select read state).
-		perror("accept4");
+	if ((slave_sock = accept(sock, (struct sockaddr *)&slave_addr, &slave_len)) < 0){
+		perror("accept");
 		fprintf(stderr, "%s: Error accepting new connection.\n", __FUNCTION__);
 		goto err;
 	}
