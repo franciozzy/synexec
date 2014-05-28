@@ -4,7 +4,7 @@
  * ------------------------------------
  *  synexec_common.c
  * ------------------
- *  Copyright 2013 (c) Felipe Franciosi <felipe@paradoxo.org>
+ *  Copyright 2014 (c) Citrix
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
