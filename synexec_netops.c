@@ -238,7 +238,7 @@ get_ifipaddr(char *if_name, struct in_addr *if_addr){
 		fprintf(stderr, "%s: error fetching interface address.\n", __FUNCTION__);
 		goto err;
 	}
-	memcpy(if_addr, (ifr.ifr_addr.sa_data)+2, sizeof(if_addr));
+	memcpy(if_addr, (ifr.ifr_addr.sa_data)+2, sizeof(*if_addr));
 
 	// Bypass error section
 	goto out;
@@ -301,7 +301,7 @@ get_ifbroad(char *if_name, struct in_addr *if_broad){
 		perror("ioctl");
 		goto err;
 	}
-	memcpy(if_broad, (ifr.ifr_addr.sa_data)+2, sizeof(if_broad));
+	memcpy(if_broad, (ifr.ifr_addr.sa_data)+2, sizeof(*if_broad));
 
 	// Bypass error section
 	goto out;
