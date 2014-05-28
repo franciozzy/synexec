@@ -233,7 +233,11 @@ main(int argc, char **argv){
 		}
 		umask(0);
 		setsid();
-		chdir("/");
+		if (chdir("/") != 0){
+			perror("chdir");
+			fprintf(stderr, "%s: Unable to chdir() to \"/\".\n", argv[0]);
+			goto err;
+		}
 		// TODO: Redirect to log
 	}
 
