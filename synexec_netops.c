@@ -198,7 +198,7 @@ printf("get_defif: gw = %s\n", inet_ntoa(gw_addr)); // Well, strtol just doesn't
  * get_ifipaddr(char *if_name, struct in_addr *if_addr);
  * -----------------------------------------------------
  *  This function gets the address of interface named 'if_name' and stores it
- *  into 'if_addr'.
+ *  into 'if_addr'. If 'if_name' is "any", it stores '0.0.0.0'.
  *
  *  Mandatory params: if_name, if_addr
  *  Optional params :
@@ -219,6 +219,12 @@ get_ifipaddr(char *if_name, struct in_addr *if_addr){
 	if (!if_name || !if_addr){
 		fprintf(stderr, "%s: invalid arguments.\n", __FUNCTION__);
 		goto err;
+	}
+
+	// Check special "any" case
+	if (!strcmp(if_name, "any")){
+		memset(&(if_addr->s_addr), 0, sizeof(if_addr->s_addr));
+		goto out;
 	}
 
 	// Create temporary socket for ioctl request
@@ -254,6 +260,7 @@ out:
 
 	// Return
 	return(err);
+
 }
 
 /*
@@ -261,7 +268,8 @@ out:
  * get_ifbroad(char *if_name, struct in_addr *if_broad);
  * -----------------------------------------------------
  *  This function gets the broadcast address of interface named 'if_name' and
- *  stores it into 'if_broad'.
+ *  stores it into 'if_broad'. If 'if_name' is set to "any", the broadcast
+ *  address is set to 255.255.255.255.
  *
  *  Mandatory params: if_name, if_broad
  *  Optional params :
@@ -282,6 +290,12 @@ get_ifbroad(char *if_name, struct in_addr *if_broad){
 	if (!if_name || !if_broad){
 		fprintf(stderr, "%s: invalid arguments.\n", __FUNCTION__);
 		goto err;
+	}
+
+	// Check special "any" case
+	if (!strcmp(if_name, "any")){
+		memset(&(if_broad->s_addr), 0xFF, sizeof(if_broad->s_addr));
+		goto out;
 	}
 
 	// Create temporary socket for ioctl request
