@@ -114,9 +114,6 @@ free_argvp(char **argp, char ***argv){
 		free(*argp);
 		*argp = NULL;
 	}
-
-	// Return
-	return;
 }
 
 /*
@@ -199,16 +196,14 @@ make_argv(char *data, char *conf_fn, char **argp, char ***argv){
 	// Return number of arguments (including the terminating NULL)
 	err = argc;
 
-	// Bypass error section
-	goto out;
+out:
+	// Return
+	return(err);
 
 err:
 	err = -1;
 	free_argvp(argp, argv);
-
-out:
-	// Return
-	return(err);
+	goto out;
 }
 
 /*
@@ -417,11 +412,6 @@ conf_close:
 		}
 	}
 
-	// Bypass error section
-	goto out;
-
-err:
-	err = -1;
 
 out:
 	if (argv){
@@ -436,7 +426,12 @@ out:
 		conf_fp = NULL;
 	}
 
+	// Return
 	return(err);
+
+err:
+	err = -1;
+	goto out;
 }
 
 /*

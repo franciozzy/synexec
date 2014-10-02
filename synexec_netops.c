@@ -68,6 +68,7 @@ get_ifdef(char **defif_name, struct in_addr *gw_addr){
 	char                    tgw_ip[15];     // Temporary gw addr as a char array
 	char                    *tstrp;         // Temporary char array pointer
 	int                     i, j;           // Temporary integers
+	int                     err = 0;        // Return code
 
 	// TODO: The instructions below can be replaced by an ioctl
 	// TODO: using SIOCRTMSG, but I couldn't find a way to do it,
@@ -76,7 +77,7 @@ get_ifdef(char **defif_name, struct in_addr *gw_addr){
 
 	// Reset defif_name
 	if (defif_name == NULL){
-		return(-1);
+		goto err;
 	}
 	*defif_name = NULL;
 
@@ -84,7 +85,7 @@ get_ifdef(char **defif_name, struct in_addr *gw_addr){
 	if ((routefp = fopen(SYNEXEC_PROC_ROUTE, "r")) == NULL){
 		perror("fopen");
 		fprintf(stderr, "%s: Error opening route table (ro) at '%s'.\n", __FUNCTION__, SYNEXEC_PROC_ROUTE);
-		return(-1);
+		goto err;
 	}
 
 	// Loop searching for default route
@@ -186,11 +187,16 @@ printf("get_defif: gw = %s\n", inet_ntoa(gw_addr)); // Well, strtol just doesn't
 
 	// Verify if we missed it
 	if (strlen(*defif_name) == 0){
-		return(-1);
+		goto err;
 	}
 
-	// Return success
-	return(0);
+out:
+	// Return
+	return(err);
+
+err:
+	err = -1;
+	goto out;
 }
 
 /*
@@ -246,12 +252,6 @@ get_ifipaddr(char *if_name, struct in_addr *if_addr){
 	}
 	memcpy(if_addr, (ifr.ifr_addr.sa_data)+2, sizeof(*if_addr));
 
-	// Bypass error section
-	goto out;
-
-err:
-	err = -1;
-
 out:
 	// Close socket
 	if (sock >= 0){
@@ -261,6 +261,9 @@ out:
 	// Return
 	return(err);
 
+err:
+	err = -1;
+	goto out;
 }
 
 /*
@@ -317,12 +320,6 @@ get_ifbroad(char *if_name, struct in_addr *if_broad){
 	}
 	memcpy(if_broad, (ifr.ifr_addr.sa_data)+2, sizeof(*if_broad));
 
-	// Bypass error section
-	goto out;
-
-err:
-	err = -1;
-
 out:
 	// Close socket
 	if (sock >= 0){
@@ -331,4 +328,8 @@ out:
 
 	// Return
 	return(err);
+
+err:
+	err = -1;
+	goto out;
 }

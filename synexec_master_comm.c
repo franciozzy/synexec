@@ -113,14 +113,13 @@ comm_tcp_accept(int sock, struct timeval *timeout, slaveset_t *slaveset){
 		goto err;
 	}
 
-	// Bypass error section
-	goto out;
+out:
+	// Return
+	return(err);
 
 err:
 	err = -1;
-
-out:
-	return(err);
+	goto out;
 }
 
 /*
@@ -181,14 +180,13 @@ comm_udp_broadcast(int sock){
 		goto err;
 	}
 
-	// Bypass error section
-	goto out;
+out:
+	// Return
+	return(err);
 
 err:
 	err = -1;
-
-out:
-	return(err);
+	goto out;
 }
 
 /*
@@ -231,14 +229,13 @@ slave_fd_probe(slave_t *slave_aux){
 		printf("%s: Slave (%s:%hu) replied to probe.\n", __FUNCTION__, inet_ntoa(slave_aux->slave_addr.sin_addr), ntohs(slave_aux->slave_addr.sin_port));
 	}
 
-	// Bypass error section
-	goto out;
-
-err:
-	err = -1;
 out:
 	// Return
 	return(err);
+
+err:
+	err = -1;
+	goto out;
 }
 
 /*
@@ -328,12 +325,6 @@ wait_slaves(slaveset_t *slaveset){
 		}
 	}
 
-	// Bypass error section
-	goto out;
-
-err:
-	err = -1;
-
 out:
 	// Free resources
 	if (net_udpfd != -1){
@@ -345,6 +336,10 @@ out:
 
 	// Return
 	return(err);
+
+err:
+	err = -1;
+	goto out;
 }
 
 /*
@@ -389,15 +384,13 @@ config_slave(slave_t *slave, char *conf_ptr, off_t conf_len){
 		fflush(stdout);
 	}
 
-	// Bypass error section
-	goto out;
-
-err:
-	err = -1;
-
 out:
 	// Return
 	return(err);
+
+err:
+	err = -1;
+	goto out;
 }
 
 /*
@@ -429,15 +422,13 @@ config_slaves(slaveset_t *slaveset, char *conf_ptr, off_t conf_len){
 		slave = slave->next;
 	}
 
-	// Bypass error section
-	goto out;
-
-err:
-	err = -1;
-
 out:
 	// Return
 	return(err);
+
+err:
+	err = -1;
+	goto out;
 }
 
 /*
@@ -470,15 +461,13 @@ execute_slaves(slaveset_t *slaveset){
 		slave = slave->next;
 	}
 
-	// Bypass error section
-	goto out;
-
-err:
-	err = -1;
-
 out:
 	// Return
 	return(err);
+
+err:
+	err = -1;
+	goto out;
 }
 
 /*
@@ -573,13 +562,11 @@ join_slaves(slaveset_t *slaveset){
 	} while(1);
 
 
-	// Bypass error section
-	goto out;
-
-err:
-	err = -1;
-
 out:
 	// Return
 	return(err);
+
+err:
+	err = -1;
+	goto out;
 }

@@ -275,12 +275,6 @@ main(int argc, char **argv){
 	printf("Session finished.\n");
 	fflush(stdout);
 
-	// Bypass error section
-	goto out;
-
-err:
-	err = 1;
-
 out:
 	// Free local resources
 	if (conf_fd >= 0){
@@ -298,4 +292,8 @@ out:
 
 	// Return
 	return(err);
+
+err:
+	err = 1;
+	goto out;
 }

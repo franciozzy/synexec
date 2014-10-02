@@ -182,12 +182,6 @@ main(int argc, char **argv){
 		goto err;
 	}
 
-	// Bypass error section
-	goto out;
-
-err:
-	err = 1;
-
 out:
 	// Release allocated resources
 	if (net_ifname){
@@ -197,4 +191,8 @@ out:
 
 	// Return
 	return(err);
+
+err:
+	err = 1;
+	goto out;
 }

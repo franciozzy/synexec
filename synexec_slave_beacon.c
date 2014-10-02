@@ -175,8 +175,13 @@ beacon(){
 		pthread_mutex_unlock(&master_mutex);
 	}
 
-	// Bypass error section
-	goto out;
+out:
+	if (beacon_fd >= 0){
+		close(beacon_fd);
+	}
+
+	// Return
+	return NULL;
 
 err:
 	// Set global error condition
@@ -188,9 +193,5 @@ err:
 	pthread_cond_signal(&master_cond);
 	pthread_mutex_unlock(&master_mutex);
 
-out:
-	if (beacon_fd >= 0){
-		close(beacon_fd);
-	}
-	return NULL;
+	goto out;
 }

@@ -83,6 +83,7 @@ slave_remove(slaveset_t *slaveset, slave_t *slave_aux){
 	}
 
 out:
+	// Return
 	return(ret);
 }
 
@@ -151,19 +152,21 @@ int
 slave_in_list(slaveset_t *slaveset, struct sockaddr_in *slave_addr){
 	// Local variables
 	slave_t                 *slave_aux;
+	int                     ret = 0;
 
 	// Run through the list returning if we found the guy
 	slave_aux = slaveset->slave;
 	while(slave_aux){
 		if (!memcmp(&(slave_addr->sin_addr), &(slave_aux->slave_addr.sin_addr), sizeof(struct sockaddr_in))){
 			// Found
-			return(1);
+			ret = 1;
+			break;
 		}
 		slave_aux = slave_aux->next;
 	}
 
-	// Not found
-	return(0);
+	// Return
+	return(ret);
 }
 
 /*
@@ -212,8 +215,9 @@ slave_add(slaveset_t *slaveset, struct sockaddr_in *slave_addr, int slave_sock){
 	slaveset->slave = slave_aux;
 	err = 1;
 
-	// Bypass error section
-	goto out;
+out:
+	// Return
+	return(err);
 
 err:
 	if (slave_aux){
@@ -223,9 +227,7 @@ err:
 		(void)close(slave_sock);
 	}
 	err = -1;
-
-out:
-	return(err);
+	goto out;
 }
 
 void

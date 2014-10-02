@@ -96,14 +96,13 @@ comm_init(uint16_t _net_port, char *net_ifname){
 		fflush(stdout);
 	}
 
-	// Bypass error section
-	goto out;
+out:
+	// Return
+	return(err);
 
 err:
 	err = -1;
-
-out:
-	return(err);
+	goto out;
 }
 
 /*
@@ -168,14 +167,13 @@ _comm_send(int sock, struct timeval *timeout, void *data, uint16_t datalen){
 		goto err;
 	}
 
-	// Bypass error section
-	goto out;
+out:
+	// Return
+	return(err);
 
 err:
 	err = -1;
-
-out:
-	return(err);
+	goto out;
 }
 
 /*
@@ -234,14 +232,13 @@ comm_send(int sock, char command, struct timeval *timeout, void *data, uint16_t 
 	}
 	xfer_bytes += err;
 
-	// Bypass error section
-	goto out;
+out:
+	// Return
+	return(err);
 
 err:
 	err = -1;
-
-out:
-	return(err);
+	goto out;
 }
 
 /*
@@ -331,14 +328,13 @@ retry:
 	// Return how many bytes were read
 	err = xfer_bytes;
 
-	// Bypass error section
-	goto out;
+out:
+	// Return
+	return(err);
 
 err:
 	err = -1;
-
-out:
-	return(err);
+	goto out;
 }
 
 /*
@@ -433,8 +429,9 @@ comm_recv(int sock, synexec_msg_t *net_msg, struct timeval *timeout, void **data
 	// At this point we must have read a header, so count it up
 	err += sizeof(*net_msg);
 
-	// Bypass error section
-	goto out;
+out:
+	// Return
+	return(err);
 
 err:
 	err = -1;
@@ -442,7 +439,5 @@ err:
 		free(*data);
 		*data = NULL;
 	}
-
-out:
-	return(err);
+	goto out;
 }
