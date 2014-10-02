@@ -47,23 +47,24 @@ extern int              verbose;
 
 /*
  * int
- * comm_init(uint16_t _net_port, char *net_ifname);
- * ------------------------------------------------
+ * comm_init(uint16_t _net_port, char *net_ifname, char force_bcast);
+ * ------------------------------------------------------------------
  *  This function initialises the global structures 'net_ifip', 'net_ifbc' and
  *  'net_port'. To set the local IP address and the broadcast IP address, it
  *  gets the data related to interface 'net_ifname'. If 'net_ifname' is NULL,
  *  it uses the data related to the interface which the default route is
- *  assigned.
+ *  assigned. If 'force_bcast' is set, the broadcast address is always forced
+ *  to 255.255.255.255.
  *
  *  Mandatory params: _net_port
- *  Optional params : net_ifname
+ *  Optional params : net_ifname, force_bcast
  *
  *  Return values:
  *   -1 Error
  *    0 Success
  */
 int
-comm_init(uint16_t _net_port, char *net_ifname){
+comm_init(uint16_t _net_port, char *net_ifname, char force_bcast){
 	// Local variables
 	int             err = 0;                // Return code
 
@@ -83,7 +84,12 @@ comm_init(uint16_t _net_port, char *net_ifname){
 	if (get_ifipaddr(net_ifname, &net_ifip) != 0){
 		goto err;
 	}
-	if (get_ifbroad(net_ifname, &net_ifbc) != 0){
+	if (force_bcast){
+		err = get_ifbroad("any", &net_ifbc);
+	}else{
+		err = get_ifbroad(net_ifname, &net_ifbc);
+	}
+	if (err){
 		goto err;
 	}
 	net_port = _net_port;

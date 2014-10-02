@@ -209,11 +209,11 @@ main(int argc, char **argv){
 
 	// Initialise comm features
 	if (net_ifname){
-		err = comm_init(net_port, net_ifname);
+		err = comm_init(net_port, net_ifname, 0);
 		free(net_ifname);
 		net_ifname = NULL;
 	} else {
-		err = comm_init(net_port, "any");
+		err = comm_init(net_port, "any", 0);
 	}
 	if (err){
 		goto err;

@@ -35,7 +35,7 @@
 
 // Function prototypes
 int
-comm_init(uint16_t _net_udpport, char *_net_ifname);
+comm_init(uint16_t _net_udpport, char *_net_ifname, char force_bcast);
 
 int
 comm_send(int sock, char command, struct timeval *timeout, void *data, uint16_t datalen);
