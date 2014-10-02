@@ -208,14 +208,15 @@ main(int argc, char **argv){
 	}
 
 	// Initialise comm features
-	if (comm_init(net_port, net_ifname) != 0){
-		goto err;
-	}
-
-	// Free local copy of net_ifname
 	if (net_ifname){
+		err = comm_init(net_port, net_ifname);
 		free(net_ifname);
 		net_ifname = NULL;
+	} else {
+		err = comm_init(net_port, "any");
+	}
+	if (err){
+		goto err;
 	}
 
 	// Run as daemon, if requested

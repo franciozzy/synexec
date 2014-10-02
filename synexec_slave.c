@@ -93,7 +93,7 @@ main(int argc, char **argv){
 			break;
 
 		case 'i':
-			// Force interface name, if unset
+			// Set interface name, if unset
 			if (net_ifname != NULL){
 				fprintf(stderr, "%s: Error, interface name already set to '%s'.\n", argv[0], net_ifname);
 				goto err;
@@ -151,15 +151,17 @@ main(int argc, char **argv){
 	}
 
 	// Initialise comm features
-	if (comm_init(net_port, net_ifname) != 0){
+	if (net_ifname){
+		err = comm_init(net_port, net_ifname);
+		free(net_ifname);
+		net_ifname = NULL;
+	} else {
+		err = comm_init(net_port, "any");
+	}
+	if (err){
 		goto err;
 	}
 
-	// Free local copy of net_ifname
-	if (net_ifname){
-		free(net_ifname);
-		net_ifname = NULL;
-	}
 
 	// Launch threads
 	if (pthread_create(&beacon_tid, NULL, &beacon, NULL) != 0){
