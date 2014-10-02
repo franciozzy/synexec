@@ -63,6 +63,7 @@ usage(char *argv0){
 	fprintf(stderr, "       -v             Increase verbosity (may be used multiple times).\n");
 	fprintf(stderr, "       -d             Run as daemon. stdout/stderr will be redirect to a log file.\n");
 	fprintf(stderr, "       -i <if_name>   Use interface <if_name> instead of default.\n");
+	fprintf(stderr, "       -b             Force broadcasts to be sent to 255.255.255.255.\n");
 	fprintf(stderr, "       -p <port>      Override default network port (%hu) with <port>.\n", MT_NETPORT);
 	fprintf(stderr, "       -s <session>   Define session ID to <session> (uint32_t, default 0).\n");
 	fprintf(stderr, "       <slaves>       Wait for this many slaves before starting.\n");
@@ -76,6 +77,7 @@ main(int argc, char **argv){
 	char                    *net_ifname = NULL;     // Interface name
 	uint16_t                net_port = 0;           // Network port (udp/tcp)
 	char                    daemonize = 0;          // Run as a daemon
+	char                    force_bcast = 0;        // Force bcasts to 255.255.255.255
 	slaveset_t              slaveset;               // Set of slaves
 	char                    *conf_fn = NULL;        // Configuration file name
 	int                     conf_fd = -1;           // Configuration file descriptor
@@ -90,7 +92,7 @@ main(int argc, char **argv){
 	slaveset.slaves = -1;
 
 	// Fetch arguments
-	while ((i = getopt(argc, argv, "hvdi:p:s:")) != -1){
+	while ((i = getopt(argc, argv, "hvdi:bp:s:")) != -1){
 		switch (i){
 		case 'h':
 			// Print help
@@ -100,6 +102,15 @@ main(int argc, char **argv){
 		case 'v':
 			// Increase verbosity
 			verbose++;
+			break;
+
+		case 'b':
+			// Force broadcasts to 255.255.255.255
+			if (force_bcast == 1){
+				fprintf(stderr, "%s: Error, already set to force broadcasts.\n", argv[0]);
+				goto err;
+			}
+			force_bcast = 1;
 			break;
 
 		case 'd':
@@ -209,7 +220,7 @@ main(int argc, char **argv){
 
 	// Initialise comm features
 	if (net_ifname){
-		err = comm_init(net_port, net_ifname, 0);
+		err = comm_init(net_port, net_ifname, force_bcast);
 		free(net_ifname);
 		net_ifname = NULL;
 	} else {
