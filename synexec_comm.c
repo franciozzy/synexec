@@ -40,6 +40,7 @@
 // Global variables
 struct in_addr          net_ifip;               // Interface main IP address
 struct in_addr          net_ifbc;               // Interface broadcast IP address
+char *                  net_ifname;		// Interface name
 uint16_t                net_port = 0;           // Network port
 
 extern uint32_t         session;
@@ -47,24 +48,24 @@ extern int              verbose;
 
 /*
  * int
- * comm_init(uint16_t _net_port, char *net_ifname, char force_bcast);
- * ------------------------------------------------------------------
+ * comm_init(uint16_t _net_port, char *_net_ifname, char force_bcast);
+ * -------------------------------------------------------------------
  *  This function initialises the global structures 'net_ifip', 'net_ifbc' and
  *  'net_port'. To set the local IP address and the broadcast IP address, it
- *  gets the data related to interface 'net_ifname'. If 'net_ifname' is NULL,
+ *  gets the data related to interface '_net_ifname'. If '_net_ifname' is NULL,
  *  it uses the data related to the interface which the default route is
  *  assigned. If 'force_bcast' is set, the broadcast address is always forced
  *  to 255.255.255.255.
  *
  *  Mandatory params: _net_port
- *  Optional params : net_ifname, force_bcast
+ *  Optional params : _net_ifname, force_bcast
  *
  *  Return values:
  *   -1 Error
  *    0 Success
  */
 int
-comm_init(uint16_t _net_port, char *net_ifname, char force_bcast){
+comm_init(uint16_t _net_port, char *_net_ifname, char force_bcast){
 	// Local variables
 	int             err = 0;                // Return code
 
@@ -73,11 +74,16 @@ comm_init(uint16_t _net_port, char *net_ifname, char force_bcast){
 	memset(&net_ifbc, 0, sizeof(net_ifbc));
 
 	// Set interface name
-	if (net_ifname == NULL){
-		if ((get_ifdef(&net_ifname, NULL) != 0) || (!net_ifname)){
+	if (_net_ifname == NULL){
+		if ((get_ifdef(&_net_ifname, NULL) != 0) || (!_net_ifname)){
 			fprintf(stderr, "Unable to find default route.\n");
 			goto err;
 		}
+	}
+	if ((net_ifname = strdup(_net_ifname)) == NULL){
+		perror("strdup");
+		fprintf(stderr, "Error duplicating interface name.\n");
+		goto err;
 	}
 
 	// Get other network configuration
