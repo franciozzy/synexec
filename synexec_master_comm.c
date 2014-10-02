@@ -302,7 +302,7 @@ wait_slaves(slaveset_t *slaveset){
 		fprintf(stderr, "%s: Error binding TCP socket.\n", __FUNCTION__);
 		goto err;
 	}
-	listen(net_tcpfd, 64);
+	listen(net_tcpfd, 128);
 
 	// Send UDP broadcast query every second until I have my slaves up
 	while (!slaveset_complete(slaveset)){
