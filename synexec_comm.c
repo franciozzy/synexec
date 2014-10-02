@@ -73,7 +73,8 @@ comm_init(uint16_t _net_port, char *net_ifname){
 
 	// Set interface name
 	if (net_ifname == NULL){
-		if (get_ifdef(&net_ifname, NULL) != 0){
+		if ((get_ifdef(&net_ifname, NULL) != 0) || (!net_ifname)){
+			fprintf(stderr, "Unable to find default route.\n");
 			goto err;
 		}
 	}

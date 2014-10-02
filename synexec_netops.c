@@ -186,7 +186,7 @@ printf("get_defif: gw = %s\n", inet_ntoa(gw_addr)); // Well, strtol just doesn't
 	fclose(routefp);
 
 	// Verify if we missed it
-	if (strlen(*defif_name) == 0){
+	if ((!*defif_name) || strlen(*defif_name) == 0){
 		goto err;
 	}
 
