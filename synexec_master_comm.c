@@ -30,6 +30,7 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include <net/if.h>
 #include <arpa/inet.h>
 #include <sys/select.h>
 #include <unistd.h>
@@ -42,6 +43,7 @@
 // Global variables
 extern struct in_addr   net_ifip;
 extern struct in_addr   net_ifbc;
+extern char *           net_ifname;
 extern uint16_t         net_port;
 
 extern uint32_t         session;
@@ -278,6 +280,11 @@ wait_slaves(slaveset_t *slaveset){
 	if (setsockopt(net_udpfd, SOL_SOCKET, SO_BROADCAST, &i, net_udplen) < 0){
 		perror("setsockopt");
 		fprintf(stderr, "%s: Error setting socket to broadcast mode.\n", __FUNCTION__);
+		goto err;
+	}
+	if (setsockopt(net_udpfd, SOL_SOCKET, SO_BINDTODEVICE, net_ifname, IFNAMSIZ-1) < 0){
+		perror("SO_BINDTODEVICE");
+		fprintf(stderr, "%s: Error binding UDP socket to interface\n", __FUNCTION__);
 		goto err;
 	}
 
