@@ -282,10 +282,12 @@ wait_slaves(slaveset_t *slaveset){
 		fprintf(stderr, "%s: Error setting socket to broadcast mode.\n", __FUNCTION__);
 		goto err;
 	}
-	if (setsockopt(net_udpfd, SOL_SOCKET, SO_BINDTODEVICE, net_ifname, IFNAMSIZ-1) < 0){
-		perror("SO_BINDTODEVICE");
-		fprintf(stderr, "%s: Error binding UDP socket to interface\n", __FUNCTION__);
-		goto err;
+	if (strcmp(net_ifname, "any")){
+		if (setsockopt(net_udpfd, SOL_SOCKET, SO_BINDTODEVICE, net_ifname, IFNAMSIZ-1) < 0){
+			perror("SO_BINDTODEVICE");
+			fprintf(stderr, "%s: Error binding UDP socket to interface\n", __FUNCTION__);
+			goto err;
+		}
 	}
 
 	// Setup TCP socket to accept new connections
