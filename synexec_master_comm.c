@@ -74,20 +74,19 @@ comm_tcp_accept(int sock, struct timeval *timeout, slaveset_t *slaveset){
 	int                     slave_sock = -1;        // Socket to accept new slaves
 	struct sockaddr_in      slave_addr;             // Slave's address
 	socklen_t               slave_len;              // Address length
-
-	int                     i;                      // Temporary integer
+	synexec_msg_t           net_msg;                // synexec msg
 	int                     err = 0;                // Return code
 
 	// Wait until there is something to read
 	FD_ZERO(&fds);
 	FD_SET(sock, &fds);
-	i = select(sock+1, &fds, NULL, NULL, timeout);
-	if (i == -1){
+	err = select(sock+1, &fds, NULL, NULL, timeout);
+	if (err == -1){
 		perror("select");
 		fprintf(stderr, "%s: Error waiting to receive response from slaves.\n", __FUNCTION__);
-		goto err;
+		goto out;
 	}else
-	if (i == 0){
+	if (err == 0){
 		goto out;
 	}
 
@@ -99,20 +98,29 @@ comm_tcp_accept(int sock, struct timeval *timeout, slaveset_t *slaveset){
 		goto err;
 	}
 	if (verbose > 0){
-		printf("%s: Accepted connection from '%s:%hu'.\n", __FUNCTION__, inet_ntoa(slave_addr.sin_addr), ntohs(slave_addr.sin_port));
+		printf("%s: Accepted connection from '%s:%hu'.\n", __FUNCTION__,
+			inet_ntoa(slave_addr.sin_addr), ntohs(slave_addr.sin_port));
+		fflush(stdout);
+	}
+
+        // Process hello
+	if (comm_recv(slave_sock, &net_msg, NULL, NULL, NULL) <= 0){
+		(void)close(slave_sock);
+		err = 0;
+		goto out;
+	}
+	if (net_msg.command != MT_SYNEXEC_MSG_REPLY){
+		(void)close(slave_sock);
+		err = 0;
+		goto out;
 	}
 
 	// Add the connection to the slaveset
-	i = slave_add(slaveset, &slave_addr, slave_sock);
-	switch (i){
-	case 1:
-		if (verbose > 1){
-			printf("%s: Added slave: %s:%hu (%d).\n", __FUNCTION__, inet_ntoa(slave_addr.sin_addr), ntohs(slave_addr.sin_port), slave_sock);
-			fflush(stdout);
-		}
-		break;
-	case -1:
-		goto err;
+	err = slave_add(slaveset, &slave_addr, slave_sock);
+	if (err && (verbose > 1)){
+		printf("%s: Added slave: %s:%hu (%d).\n", __FUNCTION__,
+			inet_ntoa(slave_addr.sin_addr), ntohs(slave_addr.sin_port), slave_sock);
+		fflush(stdout);
 	}
 
 out:
@@ -193,8 +201,50 @@ err:
 
 /*
  * int
- * slave_fd_probe(slave_t *slave_aux);
- * -----------------------------------
+ * slave_fd_probe(int sock);
+ * -------------------------
+ *  Probe the slave at the other end of 'sock'.
+ *
+ *  Mandatory params: sock
+ *  Optional params :
+ *
+ *  Return values:
+ *   -1 Error
+ *    0 Success
+ */
+int
+slave_fd_probe(int sock){
+	// Local variables
+	synexec_msg_t           net_msg;                // synexec msg
+	int                     err = 0;                // Return code
+
+	// Probe the slave
+	if (comm_send(sock, MT_SYNEXEC_MSG_PROBE, NULL, NULL, 0) <= 0){
+		goto err;
+	}
+
+	// Process the reply
+	if (comm_recv(sock, &net_msg, NULL, NULL, NULL) <= 0){
+		goto err;
+	}
+	if (net_msg.command != MT_SYNEXEC_MSG_REPLY){
+		goto err;
+	}
+
+out:
+	// Return
+	return(err);
+
+err:
+	err = -1;
+	goto out;
+}
+
+
+/*
+ * int
+ * slave_probe(slave_t *slave_aux);
+ * --------------------------------
  *  Probe the TCP fd for 'slave_aux'.
  *
  *  Mandatory params: slave_aux
@@ -205,30 +255,27 @@ err:
  *    0 Success
  */
 int
-slave_fd_probe(slave_t *slave_aux){
+slave_probe(slave_t *slave_aux){
 	// Local variables
-	synexec_msg_t           net_msg;                // synexec msg
-
 	int                     err = 0;                // Return code
 
 	if (verbose > 0){
-		printf("%s: Probing slave (%s:%hu).\n", __FUNCTION__, inet_ntoa(slave_aux->slave_addr.sin_addr), ntohs(slave_aux->slave_addr.sin_port));
+		printf("%s: Probing slave (%s:%hu).\n", __FUNCTION__,
+			inet_ntoa(slave_aux->slave_addr.sin_addr), ntohs(slave_aux->slave_addr.sin_port));
 	}
 
 	// Probe the slave
-	if (comm_send(slave_aux->slave_fd, MT_SYNEXEC_MSG_PROBE, NULL, NULL, 0) <= 0){
+	if (slave_fd_probe(slave_aux->slave_fd) < 0){
+		if (verbose > 0){
+			printf("%s: Error probing slave (%s:%hu).\n", __FUNCTION__,
+				inet_ntoa(slave_aux->slave_addr.sin_addr), ntohs(slave_aux->slave_addr.sin_port));
+		}
 		goto err;
-	}
-
-	// Process the reply
-	if (comm_recv(slave_aux->slave_fd, &net_msg, NULL, NULL, NULL) <= 0){
-		goto err;
-	}
-	if (net_msg.command != MT_SYNEXEC_MSG_REPLY){
-		goto err;
-	}
-	if (verbose > 0){
-		printf("%s: Slave (%s:%hu) replied to probe.\n", __FUNCTION__, inet_ntoa(slave_aux->slave_addr.sin_addr), ntohs(slave_aux->slave_addr.sin_port));
+	} else {
+		if (verbose > 0){
+			printf("%s: Slave (%s:%hu) replied to probe.\n", __FUNCTION__,
+				inet_ntoa(slave_aux->slave_addr.sin_addr), ntohs(slave_aux->slave_addr.sin_port));
+		}
 	}
 
 out:
@@ -314,7 +361,7 @@ wait_slaves(slaveset_t *slaveset){
 	listen(net_tcpfd, 128);
 
 	// Send UDP broadcast query every second until I have my slaves up
-	while (!slaveset_complete(slaveset)){
+	do {
 		// Send the probe broadcast
 		if (verbose > 0){
 			printf("%s: Sending UDP Probe broadcast...\n", __FUNCTION__);
@@ -327,12 +374,17 @@ wait_slaves(slaveset_t *slaveset){
 		fds_timeout.tv_usec = 0;
 		do {
 			i = comm_tcp_accept(net_tcpfd, &fds_timeout, slaveset);
-		} while (i > 0);
+			slaveset->active += i;
+		} while ((i > 0) && (slaveset->active < slaveset->slaves));
 		if (verbose > 1){
-			printf("%s: Done waiting for UDP replies. Looping.\n", __FUNCTION__);
+			printf("%s: Done waiting for UDP replies.\n", __FUNCTION__);
 			fflush(stdout);
 		}
+		if (slaveset_probe(slaveset) < 0){
+			goto err;
+		}
 	}
+	while (slaveset->slaves != slaveset->active);
 
 out:
 	// Free resources

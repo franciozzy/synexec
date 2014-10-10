@@ -269,6 +269,10 @@ handle_conn(int worker_fd, char *conf_fn){
 				fflush(stdout);
 				i = comm_send(worker_fd, MT_SYNEXEC_MSG_FINISHD, NULL, &net_time, sizeof(net_time));
 				memset(&worker_time, 0, sizeof(worker_time));
+				if (i <= 0){
+					master_eof = 1;
+					break;
+				}
 			}
 			continue;
 		}
@@ -471,7 +475,6 @@ worker(){
 
 	// Initialise sigchld signal handler and time vals
 	signal(SIGCHLD, sigchld_h);
-	memset(&worker_time, 0, sizeof(worker_time));
 
 	// Loop
 	while (!quit){
@@ -498,11 +501,13 @@ worker(){
 
 		// Connect to worker_addr
 		if (verbose > 0){
-			printf("%s: Connecting to '%s:%hu' with socket %d.\n", __FUNCTION__, inet_ntoa(worker_addr.sin_addr), ntohs(worker_addr.sin_port), worker_fd);
+			printf("%s: Connecting to '%s:%hu' with socket %d.\n", __FUNCTION__,
+				inet_ntoa(worker_addr.sin_addr), ntohs(worker_addr.sin_port), worker_fd);
 		}
 		if (connect(worker_fd, (struct sockaddr *)&worker_addr, sizeof(worker_addr)) < 0){
 			perror("connect");
-			fprintf(stderr, "%s: Error connecting to master at '%s:%hu'. Looping...\n", __FUNCTION__, inet_ntoa(worker_addr.sin_addr), ntohs(worker_addr.sin_port));
+			fprintf(stderr, "%s: Error connecting to master at '%s:%hu'. Looping...\n", __FUNCTION__,
+				inet_ntoa(worker_addr.sin_addr), ntohs(worker_addr.sin_port));
 			close(worker_fd);
 			worker_fd = -1;
 			pthread_mutex_lock(&master_mutex);
@@ -511,10 +516,17 @@ worker(){
 			continue;
 		}
 		if (verbose > 0){
-			printf("%s: Connected to '%s:%hu'.\n", __FUNCTION__, inet_ntoa(worker_addr.sin_addr), ntohs(worker_addr.sin_port));
+			printf("%s: Connected to '%s:%hu'.\n", __FUNCTION__,
+				inet_ntoa(worker_addr.sin_addr), ntohs(worker_addr.sin_port));
+		}
+
+		// Say hello
+		if (comm_send(worker_fd, MT_SYNEXEC_MSG_REPLY, NULL, NULL, 0) < 0){
+			goto conn_fail;
 		}
 
 		// Handle connection loop
+		memset(&worker_time, 0, sizeof(worker_time));
 		if (handle_conn(worker_fd, conf_fn) != 0){
 			goto err;
 		}
@@ -524,6 +536,7 @@ worker(){
 			unlink(conf_fn);
 		}
 
+conn_fail:
 		// Close connection
 		close(worker_fd);
 		worker_fd = -1;

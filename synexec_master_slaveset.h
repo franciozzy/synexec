@@ -40,12 +40,13 @@ typedef struct _slave {
 // Slave set
 typedef struct {
 	int32_t                 slaves;                 // Total number of slaves REQUIRED in the set
+	int32_t                 active;                 // Total number of slaves ACTIVE in the set
 	slave_t                 *slave;                 // Pointer to the first slave
 } slaveset_t;
 
 // Related functions
 int
-slaveset_complete(slaveset_t *slaveset);
+slaveset_probe(slaveset_t *slaveset);
 
 int
 slave_in_list(slaveset_t *slaveset, struct sockaddr_in *slave_addr);

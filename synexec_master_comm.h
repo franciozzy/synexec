@@ -37,7 +37,10 @@ int
 wait_slaves(slaveset_t *slaveset);
 
 int
-slave_fd_probe(slave_t *slave_aux);
+slave_fd_probe(int sock);
+
+int
+slave_probe(slave_t *slave_aux);
 
 int
 config_slaves(slaveset_t *slaveset, char *conf_ptr, off_t conf_len);

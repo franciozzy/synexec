@@ -162,7 +162,6 @@ main(int argc, char **argv){
 		goto err;
 	}
 
-
 	// Launch threads
 	if (pthread_create(&beacon_tid, NULL, &beacon, NULL) != 0){
 		perror("pthread_create");

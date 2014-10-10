@@ -89,32 +89,32 @@ out:
 
 /*
  * int
- * slaveset_complete(slaveset_t *slaveset);
- * ----------------------------------------
- *  This function tests if all required slaves are present in 'slaveset'.
+ * slaveset_probe(slaveset_t *slaveset);
+ * -------------------------------------
+ *  This function pings all slaves in slaveset and removes unresponding
+ *  slaves from the list. It returns the number of slaves that responded.
  *
  *  Mandatory params: slaveset
  *  Optional params :
  *
  *  Return values:
- *   0 slaveset is incomplete
- *   1 slaveset is complete
+ *   Number of slaves alive in set
  */
 int
-slaveset_complete(slaveset_t *slaveset){
+slaveset_probe(slaveset_t *slaveset){
 	// Local variables
-	int		        slave_count = 0;        // Number of slaves in the list
 	slave_t                 *slave_aux;             // Auxiliary slave_t
 	slave_t                 *slave_aux_b;           // Auxiliary slave_t
 
 	// Run through all the slaves in the set, counting
+	slaveset->active = 0;
 	if (verbose > 1){
 		printf("%s: Validating current slaveset.\n", __FUNCTION__);
 		fflush(stdout);
 	}
 	slave_aux = slaveset->slave;
 	while(slave_aux){
-		if (slave_fd_probe(slave_aux) < 0){
+		if (slave_probe(slave_aux) < 0){
 			// Close its socket
 			if (slave_aux->slave_fd >= 0){
 				(void)close(slave_aux->slave_fd);
@@ -125,14 +125,14 @@ slaveset_complete(slaveset_t *slaveset){
 			slave_remove(slaveset, slave_aux);
 			slave_aux = slave_aux_b;
 		}else{
-			slave_count++;
+			slaveset->active++;
 //printf("Worker alive: '%s:%hu'\n", inet_ntoa(slave_aux->slave_addr.sin_addr), ntohs(slave_aux->slave_addr.sin_port));
 			slave_aux = slave_aux->next;
 		}
 	}
 
-	// Return list completeness
-	return((slave_count == slaveset->slaves));
+	// Return number of slaves alive
+	return(slaveset->active);
 }
 
 /*

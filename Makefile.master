@@ -21,7 +21,7 @@
 # compile and use this program.
 
 CC=gcc
-CFLAGS_OBJS=-Wall -O3 -c
+CFLAGS_OBJS=-Wall -O3 -c -fno-strict-aliasing
 CFLAGS_TARGET=-Wall -O3 -s
 
 TARGET=synexec_master
