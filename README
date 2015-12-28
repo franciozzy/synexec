@@ -53,7 +53,7 @@ synexec
   -i <if_name>   Use interface <if_name> instead of default.
   -p <port>      Override default network port (5165) with <port>.
   -s <session>   Define session ID to <session> (uint32_t, default 0).
-  <slaves>       Wait for this many slaves before starting.
+  <slaves>       Wait for these many slaves before starting.
   <conf>         Configuration file for this session.
 
   A configuration file is organised as follows:
