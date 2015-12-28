@@ -66,7 +66,7 @@ usage(char *argv0){
 	fprintf(stderr, "       -b             Force broadcasts to be sent to 255.255.255.255.\n");
 	fprintf(stderr, "       -p <port>      Override default network port (%hu) with <port>.\n", MT_NETPORT);
 	fprintf(stderr, "       -s <session>   Define session ID to <session> (uint32_t, default 0).\n");
-	fprintf(stderr, "       <slaves>       Wait for this many slaves before starting.\n");
+	fprintf(stderr, "       <slaves>       Wait for these many slaves before starting.\n");
 	fprintf(stderr, "       <conf>         Configuration file for this session.\n");
 }
 
